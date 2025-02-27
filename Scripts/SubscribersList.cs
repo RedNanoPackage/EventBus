@@ -4,11 +4,16 @@ namespace EventBusSystem
 {
     internal class SubscribersList<TSubscriber> where TSubscriber : class
     {
-        private bool m_NeedsCleanUp = false;
+        public readonly List<TSubscriber> List = new();
 
-        public bool Executing;
-
-        public readonly List<TSubscriber> List = new List<TSubscriber>();
+        private bool _needsCleanUp = false;
+        private bool _executing = false;
+        
+        public bool Executing
+        {
+            get => _executing;
+            set => _executing = value;
+        }
 
         public void Add(TSubscriber subscriber)
         {
@@ -19,11 +24,12 @@ namespace EventBusSystem
         {
             if (Executing)
             {
-                var i = List.IndexOf(subscriber);
-                if (i >= 0)
+                var index = List.IndexOf(subscriber);
+                
+                if (index >= 0)
                 {
-                    m_NeedsCleanUp = true;
-                    List[i] = null;
+                    _needsCleanUp = true;
+                    List[index] = null;
                 }
             }
             else
@@ -34,13 +40,13 @@ namespace EventBusSystem
 
         public void Cleanup()
         {
-            if (!m_NeedsCleanUp)
+            if (!_needsCleanUp)
             {
                 return;
             }
 
             List.RemoveAll(s => s == null);
-            m_NeedsCleanUp = false;
+            _needsCleanUp = false;
         }
     }
 }

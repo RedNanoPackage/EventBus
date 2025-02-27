@@ -6,41 +6,49 @@ namespace EventBusSystem
 {
     public static class EventBus
     {
-        private static Dictionary<Type, SubscribersList<IGlobalSubscriber>> s_Subscribers
-            = new Dictionary<Type, SubscribersList<IGlobalSubscriber>>();
+        private static Dictionary<Type, SubscribersList<IGlobalSubscriber>> _subscribers = new();
 
         public static void Subscribe(IGlobalSubscriber subscriber)
         {
             List<Type> subscriberTypes = EventBusHelper.GetSubscriberTypes(subscriber);
-            foreach (Type t in subscriberTypes)
+            
+            foreach (Type type in subscriberTypes)
             {
-                if (!s_Subscribers.ContainsKey(t))
+                
+                if (!_subscribers.ContainsKey(type))
                 {
-                    s_Subscribers[t] = new SubscribersList<IGlobalSubscriber>();
+                    _subscribers[type] = new SubscribersList<IGlobalSubscriber>();
                 }
-                s_Subscribers[t].Add(subscriber);
+                
+                _subscribers[type].Add(subscriber);
             }
+            
         }
 
         public static void Unsubscribe(IGlobalSubscriber subscriber)
         {
             List<Type> subscriberTypes = EventBusHelper.GetSubscriberTypes(subscriber);
+            
             foreach (Type t in subscriberTypes)
             {
-                if (s_Subscribers.ContainsKey(t))
-                    s_Subscribers[t].Remove(subscriber);
+                
+                if (_subscribers.ContainsKey(t))
+                {
+                    _subscribers[t].Remove(subscriber);
+                }
+                
             }
         }
 
-        public static void RaiseEvent<TSubscriber>(Action<TSubscriber> action)
-            where TSubscriber : class, IGlobalSubscriber
+        public static void RaiseEvent<TSubscriber>(Action<TSubscriber> action) where TSubscriber : class, IGlobalSubscriber
         {
-            if (!s_Subscribers.ContainsKey(typeof(TSubscriber)))
+            if (!_subscribers.ContainsKey(typeof(TSubscriber)))
                 return;
 
-            SubscribersList<IGlobalSubscriber> subscribers = s_Subscribers[typeof(TSubscriber)];
+            SubscribersList<IGlobalSubscriber> subscribers = _subscribers[typeof(TSubscriber)];
 
             subscribers.Executing = true;
+            
             foreach (IGlobalSubscriber subscriber in subscribers.List)
             {
                 try
@@ -52,6 +60,7 @@ namespace EventBusSystem
                     Debug.LogError(e);
                 }
             }
+            
             subscribers.Executing = false;
             subscribers.Cleanup();
         }
